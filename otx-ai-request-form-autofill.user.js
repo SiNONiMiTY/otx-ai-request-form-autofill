@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         otx-ai-request-form-autofill
-// @version      0.4
+// @version      0.5
 // @description  Make AI Creation a little bit easier :)
 // @author       Lindjunne Gerard Montenegro II (lmontene@opentext.com)
 // @match        https://forms.office.com/pages/responsepage.aspx?id=d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u*
@@ -160,30 +160,67 @@
         }
     ];
 
-    let questionText;
+    let questionText,
+        answerMapIsUpdated = false;
 
-    // Clean-up current state
-    localStorage.removeItem( ACTIVE_SECTION );
-    localStorage.removeItem( ANSWER_MAP );
+    function setFormData() {
+        localStorage.setItem( ACTIVE_SECTION, "rd39d9e0dc25548128a3b6604e4bd6207" ); // Main Form
+        localStorage.setItem( ANSWER_MAP, localStorage.getItem( ANSWER_MAP_TEMPLATE ) );
+    }
 
+    function clearFormData() {
+        localStorage.removeItem( ACTIVE_SECTION );
+        localStorage.removeItem( ANSWER_MAP );
+    }
+
+    // Remove existing form data
+    clearFormData();
+
+    // If no user defaults are set, prompt the user to set it
     if ( localStorage.getItem( ANSWER_MAP_TEMPLATE ) === null ) {
         do {
-            questionText = prompt( "Form Question Text. Leave blank to save & quit.", "" ).toUpperCase();
+            questionText = prompt( "Form Question Text. Leave blank to save updated values & quit.", "" ).toUpperCase();
 
             if ( questionText ) {
-                let answer = prompt( `Default Answer to Question Text [${questionText}]. Case Sensitive.`, "" ),
-                    index = answerMap.findIndex( ( element ) => element.QuestionText === questionText );
+                let index = answerMap.findIndex( ( element ) => element.QuestionText === questionText );
 
-                index !== -1 ? answerMap[index].Answer = answer : alert( "Invalid Question Text, please try again." );
+                if ( index !== -1 ) {
+                     answerMap[index].Answer = prompt( `Default Answer to [${questionText}]. CASE SENSITIVE!`, "" );
+                     answerMapIsUpdated = true;
+                } else {
+                    alert( "Invalid Question Text, please try again." );
+                }
             }
         } while ( questionText );
 
-        localStorage.setItem( ANSWER_MAP_TEMPLATE, JSON.stringify( answerMap ) );
+        answerMapIsUpdated ? localStorage.setItem( ANSWER_MAP_TEMPLATE, JSON.stringify( answerMap ) ) : false;
     }
 
     if ( localStorage.getItem( ANSWER_MAP_TEMPLATE ) !== null ) {
-        // Set new state
-        localStorage.setItem( ACTIVE_SECTION, "rd39d9e0dc25548128a3b6604e4bd6207" ); // Main Form
-        localStorage.setItem( ANSWER_MAP, localStorage.getItem( ANSWER_MAP_TEMPLATE ) );
+        // Register an observer to watch the form for content changes
+        let formBody = document.getElementById( "content-root" ),
+            mutationsToObserve = {
+                childList: true,
+                subtree: true
+            };
+
+        let callback = function( mutationList ) {
+            for ( const mutation of mutationList ) {
+                if ( mutation.type === "childList" ) {
+                    let reloadForm = document.getElementsByClassName( "thank-you-page-reload-link" );
+                    if ( reloadForm[0] ) {
+                        reloadForm[0].addEventListener( "click", function() {
+                            setFormData();
+                            location.reload();
+                        }, false );
+                    }
+                }
+            }
+        };
+
+        let observer = new MutationObserver( callback );
+        observer.observe( formBody, mutationsToObserve );
+
+        setFormData();
     }
 })();
