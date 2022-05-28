@@ -160,7 +160,8 @@
         }
     ];
 
-    let questionText;
+    let questionText,
+        answerMapIsUpdated = false;
 
     // Clean-up current state
     localStorage.removeItem( ACTIVE_SECTION );
@@ -168,17 +169,21 @@
 
     if ( localStorage.getItem( ANSWER_MAP_TEMPLATE ) === null ) {
         do {
-            questionText = prompt( "Form Question Text. Leave blank to save & quit.", "" ).toUpperCase();
+            questionText = prompt( "Form Question Text. Leave blank to save updated values & quit.", "" ).toUpperCase();
 
             if ( questionText ) {
-                let answer = prompt( `Default Answer to Question Text [${questionText}]. Case Sensitive.`, "" ),
-                    index = answerMap.findIndex( ( element ) => element.QuestionText === questionText );
+                let index = answerMap.findIndex( ( element ) => element.QuestionText === questionText );
 
-                index !== -1 ? answerMap[index].Answer = answer : alert( "Invalid Question Text, please try again." );
+                if ( index !== -1 ) {
+                     answerMap[index].Answer = prompt( `Default Answer to [${questionText}]. CASE SENSITIVE!`, "" );
+                     answerMapIsUpdated = true;
+                } else {
+                    alert( "Invalid Question Text, please try again." );
+                }
             }
         } while ( questionText );
 
-        localStorage.setItem( ANSWER_MAP_TEMPLATE, JSON.stringify( answerMap ) );
+        answerMapIsUpdated ? localStorage.setItem( ANSWER_MAP_TEMPLATE, JSON.stringify( answerMap ) ) : false;
     }
 
     if ( localStorage.getItem( ANSWER_MAP_TEMPLATE ) !== null ) {
