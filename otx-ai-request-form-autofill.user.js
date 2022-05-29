@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         otx-ai-request-form-autofill
-// @version      0.5
+// @version      0.6
 // @description  Make AI Creation a little bit easier :)
 // @author       Lindjunne Gerard Montenegro II (lmontene@opentext.com)
 // @match        https://forms.office.com/pages/responsepage.aspx?id=d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u*
@@ -310,23 +310,47 @@
                             answerNumber = 0,
                             validAnswers = "";
 
+                        validAnswers += "\nInput the number of your choice:";
                         answerMap[index].ValidAnswers.forEach( ( element ) => {
                             answerNumber++;
                             validAnswers += `\n[${answerNumber}] ${element}`;
                         });
 
-                        while ( !answerIndex ) {
-                            answerIndex = prompt( `${questionText} (Number Only)\n${validAnswers}`, "" );
+                        answerIndex = prompt( `${questionText}\n${validAnswers}`, "" );
 
-                            if ( answerIndex && answerIndex <= answerMap[index].ValidAnswers.length ) {
-                                answerMap[index].Answer = answerMap[index].ValidAnswers[answerIndex - 1];
-                                answerMapIsUpdated = true;
-                            } else {
-                                alert( "Invalid Answer, please try again." );
-                                answerIndex = 0;
-                            }
+                        if ( answerIndex === null ) {
+                            // Do nothing
+                        } else if ( answerIndex && answerIndex <= answerMap[index].ValidAnswers.length ) {
+                            answerMap[index].Answer = answerMap[index].ValidAnswers[answerIndex - 1];
+                            answerMapIsUpdated = true;
+                        } else {
+                            alert( "Invalid Answer, please try again." );
                         }
                     } else if ( answerMap[index].AnswerType === "hybrid" ) {
+                        let answerIndex = 0,
+                            answerNumber = 0,
+                            validAnswers = "";
+
+                        validAnswers += "\nInput the number of your choice:";
+                        answerMap[index].ValidAnswers.forEach( ( element ) => {
+                            answerNumber++;
+                            validAnswers += `\n[${answerNumber}] ${element}`;
+                        });
+                        validAnswers += "\nOTHER (Please Specify)";
+
+                        answerIndex = prompt( `${questionText}\n${validAnswers}`, "" );
+
+                        if ( answerIndex === null ) {
+                            // Do nothing
+                        } else if ( answerIndex && answerIndex <= answerMap[index].ValidAnswers.length ) {
+                            answerMap[index].Answer = answerMap[index].ValidAnswers[answerIndex - 1];
+                            answerMapIsUpdated = true;
+                        } else if ( answerIndex && isNaN( answerIndex ) ) {
+                            answerMap[index].Answer = answerIndex;
+                            answerMapIsUpdated = true;
+                        } else {
+                            alert( "Invalid Answer, please try again." );
+                        }
                     } else {
                         answerMap[index].Answer = prompt( `${questionText}`, "" );
                         answerMapIsUpdated = true;
