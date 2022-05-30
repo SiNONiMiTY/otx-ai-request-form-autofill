@@ -6,7 +6,7 @@
 // @match        https://forms.office.com/pages/responsepage.aspx?id=d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u*
 // @grant        none
 // @downloadURL  https://raw.githubusercontent.com/SiNONiMiTY/otx-ai-request-form-autofill/release/otx-ai-request-form-autofill.user.js
-// @runAt        document-end
+// @run-at       document-idle
 // ==/UserScript==
 
 
