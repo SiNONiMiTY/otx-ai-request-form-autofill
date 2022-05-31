@@ -1,22 +1,30 @@
 // ==UserScript==
 // @name         otx-ai-request-form-autofill
-// @version      0.7
+// @version      0.8
 // @description  Make AI Creation a little bit easier :)
 // @author       Lindjunne Gerard Montenegro II (lmontene@opentext.com)
 // @match        https://forms.office.com/pages/responsepage.aspx?id=d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u*
 // @grant        none
 // @downloadURL  https://raw.githubusercontent.com/SiNONiMiTY/otx-ai-request-form-autofill/release/otx-ai-request-form-autofill.user.js
-// @run-at       document-idle
+// @run-at       document-start
 // ==/UserScript==
 
 
 
-(function() {
+/**
+ * User Defined Functions
+ */
+
+function InitializeForm( OfficeFormsResponse ) {
     "use strict";
 
-    const ACTIVE_SECTION = "officeforms.activesectiond4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u.3e61bda7-1985-4adb-9f20-ae92c2e75bfa";
-    const ANSWER_MAP = "officeforms.answermap.d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u.3e61bda7-1985-4adb-9f20-ae92c2e75bfa";
-    const ANSWER_MAP_TEMPLATE = "dfd847b5-b90d-45e7-b039-467dd09ab2b7_ANSWER_MAP";
+    if ( !OfficeFormsResponse ) {
+        return;
+    }
+
+    const ACTIVE_SECTION = `officeforms.activesectiond4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u.${OfficeFormsResponse.serverInfo.userInfo.UserId}`;
+    const ANSWER_MAP = `officeforms.answermap.d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u.${OfficeFormsResponse.serverInfo.userInfo.UserId}`;
+    const ANSWER_MAP_USER = `otx-ai-request-form-autofill.answermapuser.${OfficeFormsResponse.serverInfo.userInfo.UserId}`;
 
     let answerMap = [
         {
@@ -284,21 +292,14 @@
     let questionText,
         answerMapIsUpdated = false;
 
-    function setFormData() {
+    function setFormData( reloadPage ) {
         localStorage.setItem( ACTIVE_SECTION, "rd39d9e0dc25548128a3b6604e4bd6207" ); // Main Form
-        localStorage.setItem( ANSWER_MAP, localStorage.getItem( ANSWER_MAP_TEMPLATE ) );
+        localStorage.setItem( ANSWER_MAP, localStorage.getItem( ANSWER_MAP_USER ) );
+        reloadPage ? location.reload() : false;
     }
-
-    function clearFormData() {
-        localStorage.removeItem( ACTIVE_SECTION );
-        localStorage.removeItem( ANSWER_MAP );
-    }
-
-    // Remove existing form data
-    clearFormData();
 
     // If no user defaults are set, prompt the user to set it
-    if ( localStorage.getItem( ANSWER_MAP_TEMPLATE ) === null ) {
+    if ( localStorage.getItem( ANSWER_MAP_USER ) === null ) {
         do {
             questionText = prompt( "Form Question Text. Leave blank to save updated values & quit.", "" ).toUpperCase();
 
@@ -362,10 +363,13 @@
             }
         } while ( questionText );
 
-        answerMapIsUpdated ? localStorage.setItem( ANSWER_MAP_TEMPLATE, JSON.stringify( answerMap ) ) : false;
+        if ( answerMapIsUpdated ) {
+            localStorage.setItem( ANSWER_MAP_USER, JSON.stringify( answerMap ) );
+            setFormData( true );
+        }
     }
 
-    if ( localStorage.getItem( ANSWER_MAP_TEMPLATE ) !== null ) {
+    if ( localStorage.getItem( ANSWER_MAP_USER ) !== null ) {
         // Register an observer to watch the form for content changes
         let formBody = document.getElementById( "content-root" ),
             mutationsToObserve = {
@@ -380,8 +384,7 @@
 
                     if ( reloadForm[0] ) {
                         reloadForm[0].addEventListener( "click", function() {
-                            setFormData();
-                            location.reload();
+                            setFormData( true );
                         }, false );
                     }
                 }
@@ -390,7 +393,16 @@
 
         let observer = new MutationObserver( callback );
         observer.observe( formBody, mutationsToObserve );
-
-        setFormData();
     }
-})();
+}
+
+/**
+ * Main Entry Point
+ */
+
+let xhr = new XMLHttpRequest();
+xhr.addEventListener( "load", function() {
+    InitializeForm( JSON.parse( this.responseText ) );
+});
+xhr.open( "GET", "https://forms.office.com/handlers/ResponsePageStartup.ashx?id=d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u" );
+xhr.send();
