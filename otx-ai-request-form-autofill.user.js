@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         otx-ai-request-form-autofill
-// @version      0.8
+// @version      0.9
 // @description  Make AI Creation a little bit easier :)
 // @author       Lindjunne Gerard Montenegro II (lmontene@opentext.com)
 // @match        https://forms.office.com/pages/responsepage.aspx?id=d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u*
@@ -371,13 +371,12 @@ function InitializeForm( OfficeFormsResponse ) {
 
     if ( localStorage.getItem( ANSWER_MAP_USER ) !== null ) {
         // Register an observer to watch the form for content changes
-        let formBody = document.getElementById( "content-root" ),
-            mutationsToObserve = {
+        let formBody = document.getElementById( "content-root" );
+        let mutationsToObserve = {
                 childList: true,
                 subtree: true
             };
-
-        let callback = function( mutationList ) {
+        let observer = new MutationObserver( function( mutationList ) {
             for ( const mutation of mutationList ) {
                 if ( mutation.type === "childList" ) {
                     let reloadForm = document.getElementsByClassName( "thank-you-page-reload-link" );
@@ -389,9 +388,7 @@ function InitializeForm( OfficeFormsResponse ) {
                     }
                 }
             }
-        };
-
-        let observer = new MutationObserver( callback );
+        });
         observer.observe( formBody, mutationsToObserve );
     }
 }
@@ -402,7 +399,8 @@ function InitializeForm( OfficeFormsResponse ) {
 
 let xhr = new XMLHttpRequest();
 xhr.addEventListener( "load", function() {
-    InitializeForm( JSON.parse( this.responseText ) );
+    let serverResponse = JSON.parse( this.responseText );
+    !serverResponse.data.error ? InitializeForm( serverResponse ) : false;
 });
 xhr.open( "GET", "https://forms.office.com/handlers/ResponsePageStartup.ashx?id=d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u" );
 xhr.send();
