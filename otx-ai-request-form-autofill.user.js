@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         otx-ai-request-form-autofill
-// @version      0.9
+// @version      0.91
 // @description  Make AI Creation a little bit easier :)
 // @author       Lindjunne Gerard Montenegro II (lmontene@opentext.com)
 // @match        https://forms.office.com/pages/responsepage.aspx?id=d4ShEDPVzU6njZFtvYSdfBJ9v22uKC5Lt-HYhNFCpwlUNURWSEwxQlNDVklJWEs4TlpJRVdNWE1NQi4u*
@@ -370,6 +370,9 @@ function InitializeForm( OfficeFormsResponse ) {
     }
 
     if ( localStorage.getItem( ANSWER_MAP_USER ) !== null ) {
+        // Apply User Preferences without reloading the page.
+        setFormData( false );
+
         // Register an observer to watch the form for content changes
         let formBody = document.getElementById( "content-root" );
         let mutationsToObserve = {
